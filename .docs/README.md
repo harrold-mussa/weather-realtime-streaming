@@ -1,53 +1,54 @@
 ```mermaid
-graph TD
-    %% Workflow & Monitoring Section
-    subgraph WM ["WORKFLOW ORCHESTRATION"]
-        direction TB
-        spacer1[ ] --- PS["Pipeline Scheduler"]
-    end
+graph LR
+    %% External Interface
+    User((User/API)) <--> Airflow
 
-    %% Source Systems Section
-    subgraph SS ["SOURCE SYSTEMS"]
-        RD[("Review Database")]
-        RS[["Real-time Stream"]]
-    end
-
-    %% Data Processing Pipeline Section
-    subgraph DP ["DATA PROCESSING PIPELINE"]
+    subgraph Docker_Infrastructure [Docker Container Platform]
         direction LR
-        IS["Ingestion & Staging"]
-        DH["Diagnose & Heal Service"]
-        SA["Sentiment Analysis Engine"]
-        RA["Result Aggregation"]
         
-        IS -- "Cleaned Data" --> DH 
-        DH -- "Validated" --> SA 
-        SA -- "Scores" --> RA
+        subgraph Orchestration
+            Airflow[Apache Airflow]
+            Postgres[(PostgreSQL)]
+            Airflow --> Postgres
+        end
+
+        subgraph Kafka_Ecosystem
+            Kafka{Apache Kafka}
+            Zookeeper[Apache Zookeeper]
+            Control[Control Center]
+            Schema[Schema Registry]
+            
+            Zookeeper <--> Kafka
+            Kafka --> Control
+            Kafka --> Schema
+        end
+
+        subgraph Spark_Cluster
+            SparkMaster[Spark Master]
+            Worker1[Spark Worker]
+            Worker2[Spark Worker]
+            Worker3[Spark Worker]
+            Worker4[Spark Worker]
+
+            SparkMaster --> Worker1
+            SparkMaster --> Worker2
+            SparkMaster --> Worker3
+            SparkMaster --> Worker4
+        end
+
+        subgraph Storage
+            Cassandra[(Apache Cassandra)]
+        end
     end
 
-    %% Model Management Section
-    subgraph MM ["MODEL MANAGEMENT"]
-        MR["Model Registry & Store"]
-    end
-
-    %% Output & Analytics Section
-    subgraph OA ["OUTPUT & ANALYTICS"]
-        direction RL
-        DW[("Data Warehouse / Lake")]
-        BI["BI Dashboards & Health Reports"]
-        AL["Operational Alerts"]
-        
-        DW --> BI
-        DW --> AL
-    end
-
-    %% Global Connections with Labels
-    PS -. "Trigger Job" .-> IS
-    RD -- "CDC / Batch" --> IS
-    RS -- "Events / Hooks" --> IS
-    MR -- "Model Weights" --> SA
-    RA -- "Parquet/Delta" --> DW
+    %% Data Flow Connections
+    Airflow -- "Streaming" --> Kafka
+    Kafka -- "Streaming" --> SparkMaster
+    Spark_Cluster -- "Streaming" --> Cassandra
 
     %% Styling
-    style spacer1 fill:none,stroke:none
+    style Kafka fill:#fff,stroke:#000,stroke-width:4px
+    style Airflow fill:#fff,stroke:#01a299,stroke-width:2px
+    style SparkMaster fill:#fff,stroke:#e25a1c,stroke-width:2px
+    style Cassandra fill:#fff,stroke:#1287b1,stroke-width:2px
 ```
